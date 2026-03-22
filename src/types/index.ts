@@ -90,9 +90,6 @@ export interface WhatsAppGroup {
   name: string
   description: string | null
   member_count: number
-  message_count: number
-  joined_count: number
-  left_count: number
   created_at_wa: string | null
   synced_at: string
 }

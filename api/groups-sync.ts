@@ -46,9 +46,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         name: group.name || 'بدون اسم',
         description,
         member_count: memberCount,
-        message_count: 0,
-        joined_count: 0,
-        left_count: 0,
         synced_at: new Date().toISOString(),
       })
     }

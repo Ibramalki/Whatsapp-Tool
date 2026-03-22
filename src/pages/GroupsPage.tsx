@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, Users, MessageSquare, UserPlus, UserMinus, Wifi } from 'lucide-react'
+import { RefreshCw, Users, Wifi } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -35,7 +35,6 @@ export default function GroupsPage() {
   })
 
   const totalMembers = groups.reduce((s, g) => s + (g.member_count || 0), 0)
-  const totalMsgs = groups.reduce((s, g) => s + (g.message_count || 0), 0)
 
   return (
     <div className="p-6">
@@ -55,11 +54,10 @@ export default function GroupsPage() {
       />
 
       {/* Summary stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         {[
           { label: 'المجموعات', value: groups.length, icon: Wifi, color: 'bg-primary-50 text-primary-600' },
           { label: 'إجمالي الأعضاء', value: totalMembers, icon: Users, color: 'bg-blue-50 text-blue-600' },
-          { label: 'إجمالي الرسائل', value: totalMsgs, icon: MessageSquare, color: 'bg-purple-50 text-purple-600' },
           { label: 'متوسط الأعضاء', value: groups.length ? Math.round(totalMembers / groups.length) : 0, icon: Users, color: 'bg-amber-50 text-amber-600' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="card p-4 flex items-center gap-3">
@@ -100,15 +98,6 @@ export default function GroupsPage() {
                 <th className="text-right px-4 py-3 font-medium text-gray-600">
                   <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />الأعضاء</span>
                 </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">
-                  <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" />الرسائل</span>
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">
-                  <span className="flex items-center gap-1"><UserPlus className="w-3.5 h-3.5" />انضموا</span>
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">
-                  <span className="flex items-center gap-1"><UserMinus className="w-3.5 h-3.5" />غادروا</span>
-                </th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">آخر مزامنة</th>
               </tr>
             </thead>
@@ -125,13 +114,6 @@ export default function GroupsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-semibold text-gray-900">{(g.member_count || 0).toLocaleString('ar')}</span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{(g.message_count || 0).toLocaleString('ar')}</td>
-                  <td className="px-4 py-3">
-                    <span className="text-green-600 font-medium">+{(g.joined_count || 0).toLocaleString('ar')}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-red-500 font-medium">-{(g.left_count || 0).toLocaleString('ar')}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-400">
                     {new Date(g.synced_at).toLocaleString('ar', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
