@@ -1,7 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const TYPE_PROMPTS: Record<string, string> = {
   lesson_content: `أنت خبير تربوي متخصص في علم الأعصاب وعلم النفس التعليمي. اكتب محتوى تعليمياً مفيداً عن الموضوع المطلوب بناءً على أحدث الأبحاث العلمية. اكتب بأسلوب علمي مفهوم للطلاب. اشمل:
@@ -22,20 +19,40 @@ const TYPE_PROMPTS: Record<string, string> = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY غير مضبوط في Vercel Environment Variables' })
+  }
+
   const { topic, messageType } = req.body as { topic: string; messageType: string }
   if (!topic) return res.status(400).json({ error: 'topic is required' })
 
   const systemPrompt = TYPE_PROMPTS[messageType] || TYPE_PROMPTS.custom
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: `الموضوع: ${topic}` }],
-      system: systemPrompt,
+    // Use Anthropic API directly via fetch to avoid module init issues
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: `الموضوع: ${topic}` }],
+      }),
     })
 
-    const content = message.content[0].type === 'text' ? message.content[0].text : ''
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({ error: { message: response.statusText } }))
+      throw new Error(errData?.error?.message || `HTTP ${response.status}`)
+    }
+
+    const data = await response.json()
+    const content = data.content?.[0]?.text || ''
     return res.status(200).json({ content })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'

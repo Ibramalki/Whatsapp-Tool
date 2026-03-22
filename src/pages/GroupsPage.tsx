@@ -22,7 +22,7 @@ export default function GroupsPage() {
 
   const syncGroups = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/groups/sync', { method: 'POST' })
+      const res = await fetch('/api/groups-sync', { method: 'POST' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       return data
