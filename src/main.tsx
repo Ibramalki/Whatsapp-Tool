@@ -14,11 +14,39 @@ const queryClient = new QueryClient({
   },
 })
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, fontFamily: 'Arial', direction: 'rtl' }}>
+          <h2 style={{ color: '#dc2626' }}>حدث خطأ في التطبيق</h2>
+          <pre style={{ background: '#fee2e2', padding: 16, borderRadius: 8, fontSize: 13, whiteSpace: 'pre-wrap' }}>
+            {this.state.error.message}
+          </pre>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      <Toaster position="top-left" />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <Toaster position="top-left" />
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 )
