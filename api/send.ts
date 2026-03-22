@@ -1,12 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { createWasender, WasenderAPIError, type RetryConfig } from 'wasenderapi'
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const WASENDER_API_URL = 'https://www.wasenderapi.com/api/send-message'
+const retryOptions: RetryConfig = {
+  enabled: true,
+  maxRetries: 3, // auto-retry on HTTP 429 rate limit
+}
+
+const wasender = createWasender(
+  process.env.WASENDER_API_KEY,
+  undefined,
+  undefined,
+  undefined,
+  retryOptions
+)
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -23,32 +35,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'phone and message are required' })
   }
 
-  // Format phone: ensure it starts with +
+  // Format phone: ensure E.164 format (starts with +)
   const formattedPhone = phone.startsWith('+') ? phone : `+${phone.replace(/[^\d]/g, '')}`
 
   try {
-    const waRes = await fetch(WASENDER_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.WASENDER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ to: formattedPhone, text: message }),
+    const result = await wasender.sendText({
+      to: formattedPhone,
+      text: message,
     })
-
-    const waData = await waRes.json() as { success?: boolean; data?: { msgId?: string } }
-
-    if (!waRes.ok || !waData.success) {
-      // Log failure
-      await supabase.from('message_logs').insert({
-        lead_id: lead_id || null,
-        phone: formattedPhone,
-        message,
-        status: 'failed',
-        error: JSON.stringify(waData),
-      })
-      return res.status(500).json({ error: 'WaSenderAPI error', details: waData })
-    }
 
     // Log success
     await supabase.from('message_logs').insert({
@@ -58,16 +52,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       status: 'sent',
     })
 
-    return res.status(200).json({ success: true, message_id: waData.data?.msgId })
+    return res.status(200).json({
+      success: true,
+      rateLimit: result.rateLimit,
+    })
   } catch (err) {
-    const error = err instanceof Error ? err.message : 'Unknown error'
+    let errorMessage = 'Unknown error'
+
+    if (err instanceof WasenderAPIError) {
+      errorMessage = err.apiMessage || `HTTP ${err.statusCode}`
+      console.error('WaSenderAPI Error:', {
+        status: err.statusCode,
+        message: err.apiMessage,
+        details: err.errorDetails,
+        rateLimit: err.rateLimit,
+      })
+    } else if (err instanceof Error) {
+      errorMessage = err.message
+    }
+
     await supabase.from('message_logs').insert({
       lead_id: lead_id || null,
       phone: formattedPhone,
       message,
       status: 'failed',
-      error,
+      error: errorMessage,
     })
-    return res.status(500).json({ error })
+
+    return res.status(500).json({ error: errorMessage })
   }
 }
