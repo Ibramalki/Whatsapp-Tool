@@ -70,6 +70,33 @@ export interface MessageLog {
   campaigns?: Pick<Campaign, 'name'>
 }
 
+export type MessageType = 'custom' | 'lesson_content' | 'lesson_test' | 'tip'
+
+export interface ScheduledMessage {
+  id: string
+  title: string
+  message_type: MessageType
+  content: string
+  audience_filter: AudienceFilter
+  scheduled_at: string
+  status: 'pending' | 'sent' | 'failed' | 'cancelled'
+  ai_topic: string | null
+  ai_generated: boolean
+  created_at: string
+}
+
+export interface WhatsAppGroup {
+  id: string
+  name: string
+  description: string | null
+  member_count: number
+  message_count: number
+  joined_count: number
+  left_count: number
+  created_at_wa: string | null
+  synced_at: string
+}
+
 // CSV import row type - supports both English and Arabic column names
 export interface CSVRow {
   // English column names (from export)

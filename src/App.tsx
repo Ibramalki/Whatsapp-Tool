@@ -5,6 +5,8 @@ import {
   FileText,
   MessageSquare,
   LayoutDashboard,
+  CalendarClock,
+  Wifi,
 } from 'lucide-react'
 import { cn } from './lib/utils'
 import Dashboard from './pages/Dashboard'
@@ -12,12 +14,16 @@ import LeadsPage from './pages/LeadsPage'
 import TemplatesPage from './pages/TemplatesPage'
 import CampaignsPage from './pages/CampaignsPage'
 import LogsPage from './pages/LogsPage'
+import SchedulePage from './pages/SchedulePage'
+import GroupsPage from './pages/GroupsPage'
 
 const navItems = [
   { to: '/dashboard', label: 'الرئيسية', icon: LayoutDashboard },
   { to: '/leads', label: 'العملاء', icon: Users },
   { to: '/templates', label: 'القوالب', icon: FileText },
   { to: '/campaigns', label: 'الحملات', icon: Megaphone },
+  { to: '/schedule', label: 'الجدولة', icon: CalendarClock },
+  { to: '/groups', label: 'المجموعات', icon: Wifi },
   { to: '/logs', label: 'سجل الرسائل', icon: MessageSquare },
 ]
 
@@ -26,7 +32,7 @@ export default function App() {
     <BrowserRouter>
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-56 bg-white border-l border-gray-200 flex flex-col shadow-sm">
+        <aside className="w-52 bg-white border-l border-gray-200 flex flex-col shadow-sm">
           {/* Logo */}
           <div className="p-5 border-b border-gray-100">
             <div className="flex items-center gap-3">
@@ -74,6 +80,8 @@ export default function App() {
             <Route path="/leads" element={<LeadsPage />} />
             <Route path="/templates" element={<TemplatesPage />} />
             <Route path="/campaigns" element={<CampaignsPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/groups" element={<GroupsPage />} />
             <Route path="/logs" element={<LogsPage />} />
           </Routes>
         </main>
