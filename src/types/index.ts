@@ -7,10 +7,9 @@ export interface Lead {
   name: string
   phone: string
   grade: string | null
+  is_registered: boolean
   status: LeadStatus
-  notes: string | null
   created_at: string
-  updated_at: string
 }
 
 export interface Template {
@@ -71,9 +70,16 @@ export interface MessageLog {
   campaigns?: Pick<Campaign, 'name'>
 }
 
-// CSV import row type
+// CSV import row type - supports both English and Arabic column names
 export interface CSVRow {
-  name: string
-  phone: string
+  // English column names (from export)
+  'Full Name'?: string
+  'Phone Number'?: string
+  'Grade'?: string
+  'Is Registered'?: string
+  // Arabic/legacy column names
+  name?: string
+  phone?: string
   grade?: string
+  is_registered?: string
 }

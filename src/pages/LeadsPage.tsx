@@ -82,16 +82,18 @@ export default function LeadsPage() {
         if (!rows.length) return toast.error('الملف فارغ')
 
         const insertData = rows
-          .filter((r) => r.name && r.phone)
-          .map((r) => ({
-            name: r.name.trim(),
-            phone: r.phone.trim(),
-            grade: r.grade?.trim() || null,
-            status: 'new' as LeadStatus,
-          }))
+          .filter((r) => (r['Full Name'] || r.name) && (r['Phone Number'] || r.phone))
+          .map((r) => {
+            const name = (r['Full Name'] || r.name || '').trim()
+            const phone = (r['Phone Number'] || r.phone || '').trim()
+            const grade = (r['Grade'] || r.grade || '').trim() || null
+            const regVal = (r['Is Registered'] || r.is_registered || 'No').trim().toLowerCase()
+            const is_registered = regVal === 'yes' || regVal === 'true' || regVal === '1' || regVal === 'نعم'
+            return { name, phone, grade, is_registered, status: 'new' as LeadStatus }
+          })
 
         if (!insertData.length) {
-          return toast.error('لا توجد بيانات صحيحة. تأكد من أعمدة: name, phone')
+          return toast.error('لا توجد بيانات صحيحة. تأكد من أعمدة: Full Name, Phone Number')
         }
 
         const { error } = await supabase
@@ -220,6 +222,7 @@ export default function LeadsPage() {
                 <th className="text-right px-4 py-3 font-medium text-gray-600">الاسم</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">الرقم</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">الصف</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-600">مسجّل</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">الحالة</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">إجراءات</th>
               </tr>
@@ -230,6 +233,11 @@ export default function LeadsPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">{lead.name}</td>
                   <td className="px-4 py-3 text-gray-600 font-mono" dir="ltr">{lead.phone}</td>
                   <td className="px-4 py-3 text-gray-600">{lead.grade || '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${lead.is_registered ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {lead.is_registered ? 'نعم' : 'لا'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <select
                       className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer ${STATUS_COLORS[lead.status]}`}
